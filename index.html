@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bio Fresh – Algae Air Purifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Bio Fresh is a smart algae-based air purifier that monitors CO2, temperature, light, humidity and water quality using ESP32 and low-cost sensors."
+  />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-soft: #0b1120;
+      --card: #020617;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.12);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.25);
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.85);
+      --radius-xl: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    /* Layout */
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(18px);
+      background: linear-gradient(
+        to bottom,
+        rgba(15, 23, 42, 0.95),
+        rgba(15, 23, 42, 0.78),
+        transparent
+      );
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0.6rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .logo-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 14px;
+      background: radial-gradient(circle at 30% 20%, #4ade80, #22c55e 40%, #16a34a 80%);
+      box-shadow: 0 0 18px rgba(34, 197, 94, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #022c22;
+    }
+
+    .logo-text-main {
+      font-weight: 700;
+      font-size: 1.02rem;
+      letter-spacing: 0.04em;
+    }
+
+    .logo-text-sub {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      position: relative;
+      padding-bottom: 0.2rem;
+    }
+
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #22c55e, #a3e635);
+      transition: width 0.22s ease-out;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-cta {
+      border-radius: 999px;
+      padding: 0.4rem 0.9rem;
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      background: radial-gradient(circle at top left, #22c55e1c, transparent);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-cta-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.9);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      border-radius: 999px;
+      padding: 0.25rem 0.65rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+    }
+
+    .mobile-nav-links {
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 0 1.25rem 0.75rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      background: radial-gradient(circle at top, #020617, #020617ea);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3.5rem;
+    }
+
+    section {
+      padding: 3.25rem 0;
+    }
+
+    /* Hero */
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr);
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: radial-gradient(circle at top left, #22c55e12, transparent);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.9rem;
+    }
+
+    .eyebrow-pill {
+      padding: 0.08rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      color: #bbf7d0;
+      font-weight: 600;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 3.2vw, 2.7rem);
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      margin-bottom: 0.9rem;
+    }
+
+    .hero-title span {
+      background: linear-gradient(90deg, #bbf7d0, #4ade80, #22c55e);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+      max-width: 32rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .hero-highlights {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.7rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .hero-chip {
+      font-size: 0.7rem;
+      padding: 0.28rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.9);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: var(--muted);
+    }
+
+    .hero-chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      align-items: center;
+    }
+
+    .btn-primary,
+    .btn-ghost {
+      border-radius: 999px;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.86rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out,
+        background 0.15s ease-out, border-color 0.15s ease-out;
+    }
+
+    .btn-primary {
+      background: radial-gradient(circle at top left, #bbf7d0, #22c55e);
+      color: #022c22;
+      box-shadow: 0 16px 35px rgba(34, 197, 94, 0.45);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 20px 40px rgba(34, 197, 94, 0.55);
+    }
+
+    .btn-ghost {
+      border-color: rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .btn-ghost:hover {
+      border-color: #22c55e;
+      color: #e5e7eb;
+    }
+
+    .hero-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .hero-meta strong {
+      color: #a5b4fc;
+      font-weight: 500;
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 260px;
+    }
+
+    .hero-glass {
+      position: relative;
+      z-index: 1;
+      border-radius: 30px;
+      padding: 1.15rem 1.1rem;
+      background: radial-gradient(circle at top left, #22c55e20, #020617e0 55%);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 0.8rem;
+      height: 100%;
+    }
+
+    .hero-glass-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .status-pill {
+      padding: 0.16rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.12);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      color: #bbf7d0;
+    }
+
+    .status-pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.85);
+    }
+
+    .hero-sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.4rem;
+    }
+
+    .sensor-card {
+      border-radius: 16px;
+      padding: 0.55rem 0.6rem;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      font-size: 0.75rem;
+    }
+
+    .sensor-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.15rem;
+      color: var(--muted);
+    }
+
+    .sensor-label span {
+      font-size: 0.7rem;
+    }
+
+    .sensor-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .sensor-value.good {
+      color: #4ade80;
+    }
+
+    .sensor-value.warn {
+      color: #fbbf24;
+    }
+
+    .sensor-tag {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #94a3b8;
+    }
+
+    .hero-bottom-strip {
+      margin-top: 0.7rem;
+      padding-top: 0.55rem;
+      border-top: 1px dashed rgba(148, 163, 184, 0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .micro-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .micro-pill {
+      padding: 0.12rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.85);
+      font-size: 0.62rem;
+    }
+
+    .hero-glow-orb {
+      position: absolute;
+      inset: auto -40px 0 auto;
+      width: 170px;
+      height: 170px;
+      border-radius: 999px;
+      background: radial-gradient(circle, #22c55e50, transparent 70%);
+      opacity: 0.8;
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    /* Sections */
+
+    .section-title {
+      font-size: 1.4rem;
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .section-kicker {
+      font-size: 0.8rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .section-description {
+      font-size: 0.9rem;
+      color: var(--muted);
+      max-width: 40rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 1.8rem;
+      align-items: flex-start;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #0f172a, #020617);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-subtle);
+      padding: 1.1rem 1.1rem 1.2rem;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .steps {
+      display: grid;
+      gap: 0.8rem;
+      font-size: 0.86rem;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.6rem;
+      align-items: flex-start;
+    }
+
+    .step-index {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      color: #a5b4fc;
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.86rem;
+    }
+
+    .step-body {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--muted);
+    }
+
+    /* Sensors grid */
+
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+    }
+
+    .sensor-box {
+      border-radius: 20px;
+      padding: 0.9rem;
+      background: radial-gradient(circle at top left, #0b1120, #020617);
+      border: 1px solid rgba(30, 64, 175, 0.6);
+      box-shadow: var(--shadow-soft);
+      font-size: 0.82rem;
+    }
+
+    .sensor-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .sensor-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .sensor-type-pill {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #93c5fd;
+    }
+
+    .sensor-desc {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .sensor-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.28rem;
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+
+    .sensor-meta span {
+      padding: 0.13rem 0.45rem;
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+    }
+
+    /* Benefits / Features */
+
+    .columns-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+    }
+
+    .bullet {
+      font-size: 0.82rem;
+      margin-bottom: 0.3rem;
+      display: flex;
+      gap: 0.55rem;
+      align-items: flex-start;
+    }
+
+    .bullet-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      margin-top: 0.35rem;
+      background: #22c55e;
+    }
+
+    /* Table */
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 0.6rem;
+    }
+
+    .table th,
+    .table td {
+      padding: 0.45rem 0.4rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.9);
+    }
+
+    .table th {
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table-total {
+      font-weight: 600;
+    }
+
+    /* Contact */
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 1.6rem;
+    }
+
+    form {
+      display: grid;
+      gap: 0.7rem;
+      font-size: 0.8rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.15rem;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 0.5rem 0.55rem;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+    }
+
+    footer {
+      border-top: 1px solid rgba(51, 65, 85, 0.9);
+      padding: 1rem 1.25rem 1.6rem;
+      font-size: 0.78rem;
+      color: #6b7280;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: space-between;
+    }
+
+    /* Responsive */
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hero-visual {
+        order: -1;
+      }
+
+      .two-col,
+      .contact-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 700px) {
+      .nav-links {
+        display: none;
+      }
+
+      .nav-cta {
+        display: none;
+      }
+
+      .mobile-menu-btn {
+        display: inline-flex;
+      }
+
+      section {
+        padding: 2.4rem 0;
+      }
+
+      .hero {
+        gap: 2rem;
+      }
+
+      .hero-highlights {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 500px) {
+      .hero-highlights {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hero-glass {
+        padding: 1rem 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <div class="logo">
+        <div class="logo-badge">BF</div>
+        <div>
+          <div class="logo-text-main">Bio Fresh</div>
+          <div class="logo-text-sub">Algae Air Purifier</div>
+        </div>
+      </div>
+
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#how-it-works">Working</a>
+        <a href="#sensors">Sensors</a>
+        <a href="#benefits">Benefits</a>
+        <a href="#cost">Cost</a>
+        <a href="#contact">Contact</a>
+      </div>
+
+      <button class="nav-cta" onclick="scrollToSection('contact')">
+        <span class="nav-cta-dot"></span>
+        Demo Ready
+      </button>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn">Menu</button>
+    </nav>
+
+    <div class="mobile-nav-links" id="mobileNavLinks">
+      <a href="#about" onclick="toggleMobileNav()">About</a>
+      <a href="#how-it-works" onclick="toggleMobileNav()">Working</a>
+      <a href="#sensors" onclick="toggleMobileNav()">Sensors</a>
+      <a href="#benefits" onclick="toggleMobileNav()">Benefits</a>
+      <a href="#cost" onclick="toggleMobileNav()">Cost</a>
+      <a href="#contact" onclick="toggleMobileNav()">Contact</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section id="top">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">
+            <span class="eyebrow-pill">Student Innovation</span>
+            Real-time algae based air purification
+          </div>
+          <h1 class="hero-title">
+            Smart <span>Bio Fresh</span> Algae Air Purifier with
+            ESP32 monitoring.
+          </h1>
+          <p class="hero-subtitle">
+            Bio Fresh combines living green algae with low-cost electronics to
+            capture CO2, release oxygen and monitor indoor air quality
+            automatically. Designed for classrooms, labs and eco-friendly homes.
+          </p>
+
+          <div class="hero-highlights">
+            <div class="hero-chip">
+              <span class="hero-chip-dot"></span>
+              CO2 &amp; air quality
+            </div>
+            <div class="hero-chip">
+              <span class="hero-chip-dot"></span>
+              Light &amp; temperature
+            </div>
+            <div class="hero-chip">
+              <span class="hero-chip-dot"></span>
+              Cloud-ready ESP32
+            </div>
+          </div>
+
+          <div class="hero-cta-row">
+            <button class="btn-primary" onclick="scrollToSection('how-it-works')">
+              See How It Works
+            </button>
+            <button class="btn-ghost" onclick="scrollToSection('sensors')">
+              View Sensors &amp; Tech
+            </button>
+          </div>
+          <p class="hero-meta">
+            Built using <strong>MQ-135, BH1750, HW-828, DS18B20, ESP32, LED lighting &amp; potentiometer</strong>.
+          </p>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-glass">
+            <div class="hero-glass-header">
+              <div>
+                <div style="font-size: 0.8rem; font-weight: 600">
+                  Live Tank Status
+                </div>
+                <div style="font-size: 0.7rem; color: var(--muted)">
+                  Bio Fresh – Algae culture
+                </div>
+              </div>
+              <div class="status-pill">
+                <span class="status-pill-dot"></span>
+                Healthy
+              </div>
+            </div>
+
+            <div class="hero-sensor-grid">
+              <div class="sensor-card">
+                <div class="sensor-label">
+                  <span>CO2 (MQ-135)</span>
+                  <span>Air Quality</span>
+                </div>
+                <div class="sensor-value good">420 ppm</div>
+                <div class="sensor-tag">Within healthy indoor range</div>
+              </div>
+              <div class="sensor-card">
+                <div class="sensor-label">
+                  <span>Light (BH1750)</span>
+                  <span>Illumination</span>
+                </div>
+                <div class="sensor-value warn">6800 lux</div>
+                <div class="sensor-tag">Optimal for photosynthesis</div>
+              </div>
+              <div class="sensor-card">
+                <div class="sensor-label">
+                  <span>Water Temp (DS18B20)</span>
+                  <span>Tank</span>
+                </div>
+                <div class="sensor-value good">26.4 °C</div>
+                <div class="sensor-tag">Ideal for algae growth</div>
+              </div>
+              <div class="sensor-card">
+                <div class="sensor-label">
+                  <span>Level (HW-828)</span>
+                  <span>Water</span>
+                </div>
+                <div class="sensor-value good">OK</div>
+                <div class="sensor-tag">Refill not required</div>
+              </div>
+            </div>
+
+            <div class="hero-bottom-strip">
+              <div class="micro-pill-row">
+                <span class="micro-pill">ESP32 Wi-Fi enabled</span>
+                <span class="micro-pill">Low cost components</span>
+                <span class="micro-pill">Student-friendly design</span>
+              </div>
+              <div style="text-align: right">
+                <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.16em; color: #9ca3af;">
+                  Live dashboard
+                </div>
+                <div style="font-size: 0.82rem;">Fully automatic monitoring</div>
+              </div>
+            </div>
+          </div>
+          <div class="hero-glow-orb"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <div class="two-col">
+        <div>
+          <div class="section-kicker">Project Overview</div>
+          <h2 class="section-title">What is the Bio Fresh Algae Air Purifier?</h2>
+          <p class="section-description">
+            Bio Fresh is a prototype that uses live algae culture in a water tank to
+            improve indoor air quality. Algae naturally absorbs carbon dioxide (CO2)
+            and releases oxygen (O2) through photosynthesis. We enhance this
+            biological process with sensors and an ESP32 microcontroller to monitor
+            the environment in real time.
+          </p>
+          <p class="section-description">
+            The system continuously tracks CO2 levels, light intensity, water
+            temperature and tank water level. LED grow lights, controlled using a
+            potentiometer, ensure the algae receives the right amount of light even
+            indoors. All readings can be displayed on a web dashboard or sent to
+            cloud platforms for remote monitoring.
+          </p>
+          <div class="badge-row">
+            <span class="badge">Eco-friendly</span>
+            <span class="badge">Low cost hardware</span>
+            <span class="badge">IoT ready</span>
+            <span class="badge">Student project</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.7rem;">
+            Key Objectives
+          </h3>
+          <div class="steps">
+            <div class="step">
+              <div class="step-index">1</div>
+              <div>
+                <div class="step-title">Reduce indoor CO2 with algae</div>
+                <div class="step-body">
+                  Use natural algae photosynthesis to capture carbon dioxide and
+                  release fresh oxygen in closed rooms.
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-index">2</div>
+              <div>
+                <div class="step-title">Monitor air and water quality</div>
+                <div class="step-body">
+                  Continuously measure CO2, temperature, light and water level using
+                  low-cost sensors for better control.
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-index">3</div>
+              <div>
+                <div class="step-title">Make it smart and automatic</div>
+                <div class="step-body">
+                  Use ESP32 for automatic data logging and Wi-Fi connectivity, so
+                  readings can be accessed remotely without manual checking.
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-index">4</div>
+              <div>
+                <div class="step-title">Educate and create awareness</div>
+                <div class="step-body">
+                  Demonstrate how biotechnology and IoT can work together to fight
+                  air pollution and climate change.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works">
+      <div class="two-col">
+        <div>
+          <div class="section-kicker">Working Principle</div>
+          <h2 class="section-title">How the system works from air to data</h2>
+          <p class="section-description">
+            The purifier has a transparent tank containing water and algae culture
+            (for example, <strong>Spirogyra</strong>). Air from the room comes in
+            contact with the surface of the tank, and the algae absorbs CO2 while
+            producing oxygen under suitable light conditions.
+          </p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-index">1</div>
+              <div>
+                <div class="step-title">Algae photosynthesis</div>
+                <div class="step-body">
+                  In the presence of light, algae uses CO2 dissolved in water and
+                  produces oxygen. This helps reduce CO2 concentration in the nearby
+                  air.
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-index">2</div>
+              <div>
+                <div class="step-title">Sensing the environment</div>
+                <div class="step-body">
+                  MQ-135 measures air quality / CO2 proxy, DS18B20 checks water
+                  temperature, BH1750 senses light, and HW-828 monitors water level.
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-index">3</div>
+              <div>
+                <div class="step-title">Smart control with ESP32</div>
+                <div class="step-body">
+                  ESP32 reads all sensor values and can control the algae LED lights
+                  (brightness adjusted using a potentiometer). Data can be sent to a
+                  web page or IoT cloud.
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-index">4</div>
+              <div>
+                <div class="step-title">Display &amp; alerts</div>
+                <div class="step-body">
+                  The system can show live readings, highlight poor air quality, and
+                  warn when water level or temperature is out of range.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.6rem;">
+            Typical Sensor Ranges
+          </h3>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Typical Range</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CO2 (proxy)</td>
+                <td>400 – 1200 ppm</td>
+                <td>Indoor air quality</td>
+              </tr>
+              <tr>
+                <td>Light (BH1750)</td>
+                <td>3000 – 8000 lux</td>
+                <td>Algae photosynthesis</td>
+              </tr>
+              <tr>
+                <td>Water Temp</td>
+                <td>22 – 30 °C</td>
+                <td>Algae growth</td>
+              </tr>
+              <tr>
+                <td>Water Level</td>
+                <td>Safe / Low</td>
+                <td>Protect pump &amp; culture</td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem;">
+            Values shown are example ranges used for demonstration; actual values
+            can be calibrated depending on the algae species and tank size.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SENSORS -->
+    <section id="sensors">
+      <div class="section-kicker">Hardware Stack</div>
+      <h2 class="section-title">Sensors &amp; Components Used</h2>
+      <p class="section-description">
+        The design focuses on using easily available and low-cost modules that can
+        be interfaced directly with the ESP32 development board.
+      </p>
+
+      <div class="sensor-grid">
+        <div class="sensor-box">
+          <div class="sensor-box-header">
+            <div>
+              <div class="sensor-name">MQ-135 Gas Sensor</div>
+              <div class="sensor-type-pill">CO2 / air quality proxy</div>
+            </div>
+            <span style="font-size: 0.7rem; color: #facc15;">Analog</span>
+          </div>
+          <p class="sensor-desc">
+            Used to measure overall air quality and act as an approximate indicator
+            for CO2 concentration near the algae tank.
+          </p>
+          <div class="sensor-meta">
+            <span>Monitors air pollution</span>
+            <span>Helps show before/after effect</span>
+          </div>
+        </div>
+
+        <div class="sensor-box">
+          <div class="sensor-box-header">
+            <div>
+              <div class="sensor-name">BH1750 Light Sensor</div>
+              <div class="sensor-type-pill">Illuminance (lux)</div>
+            </div>
+            <span style="font-size: 0.7rem; color: #93c5fd;">I²C</span>
+          </div>
+          <p class="sensor-desc">
+            Measures the intensity of light falling on the algae tank to ensure
+            there is sufficient light for photosynthesis.
+          </p>
+          <div class="sensor-meta">
+            <span>Adjust LED brightness</span>
+            <span>Maintain optimal lux</span>
+          </div>
+        </div>
+
+        <div class="sensor-box">
+          <div class="sensor-box-header">
+            <div>
+              <div class="sensor-name">HW-828 Water Level Sensor</div>
+              <div class="sensor-type-pill">Tank level</div>
+            </div>
+            <span style="font-size: 0.7rem; color: #f97316;">Digital / analog</span>
+          </div>
+          <p class="sensor-desc">
+            Detects water level inside the algae tank to prevent drying, protect
+            the pump (if used) and keep algae safe.
+          </p>
+          <div class="sensor-meta">
+            <span>Low-level alert</span>
+            <span>Algae protection</span>
+          </div>
+        </div>
+
+        <div class="sensor-box">
+          <div class="sensor-box-header">
+            <div>
+              <div class="sensor-name">DS18B20 Temperature Sensor</div>
+              <div class="sensor-type-pill">Water temperature</div>
+            </div>
+            <span style="font-size: 0.7rem; color: #a5b4fc;">1-Wire</span>
+          </div>
+          <p class="sensor-desc">
+            Monitors the temperature of the algae culture to keep it in the ideal
+            range for growth and photosynthesis.
+          </p>
+          <div class="sensor-meta">
+            <span>Accurate digital reading</span>
+            <span>Water-proof probe</span>
+          </div>
+        </div>
+
+        <div class="sensor-box">
+          <div class="sensor-box-header">
+            <div>
+              <div class="sensor-name">ESP32 Dev Board</div>
+              <div class="sensor-type-pill">Controller + Wi-Fi</div>
+            </div>
+            <span style="font-size: 0.7rem; color: #34d399;">Core</span>
+          </div>
+          <p class="sensor-desc">
+            Main microcontroller that reads all sensor data, controls LEDs and
+            optionally uploads data to a web dashboard or IoT platform.
+          </p>
+          <div class="sensor-meta">
+            <span>Built-in Wi-Fi / Bluetooth</span>
+            <span>Multiple ADC &amp; digital pins</span>
+          </div>
+        </div>
+
+        <div class="sensor-box">
+          <div class="sensor-box-header">
+            <div>
+              <div class="sensor-name">LED Grow Light &amp; Potentiometer</div>
+              <div class="sensor-type-pill">Lighting &amp; control</div>
+            </div>
+            <span style="font-size: 0.7rem; color: #f472b6;">Output</span>
+          </div>
+          <p class="sensor-desc">
+            LED light provides the required spectrum for algae; the potentiometer
+            allows manual brightness control which can also be read by ESP32.
+          </p>
+          <div class="sensor-meta">
+            <span>Supports indoor setup</span>
+            <span>Energy efficient</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENEFITS -->
+    <section id="benefits">
+      <div class="section-kicker">Why It Matters</div>
+      <h2 class="section-title">Benefits &amp; Applications</h2>
+      <p class="section-description">
+        Bio Fresh is not just a science experiment; it is a teaching tool and a
+        starting point for real sustainable air solutions.
+      </p>
+
+      <div class="columns-3">
+        <div class="card">
+          <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+            Environmental Impact
+          </h3>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Uses living algae instead of chemical filters.</div>
+          </div>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Helps reduce indoor CO2 concentration.</div>
+          </div>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Supports SDG goals related to climate action and health.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+            Educational Value
+          </h3>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Explains photosynthesis, algae biology and habitats.</div>
+          </div>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Shows how sensors and IoT can solve real problems.</div>
+          </div>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Ideal for school / college science fairs and exhibitions.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+            Technical Highlights
+          </h3>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Combines analog, digital, I²C and 1-Wire sensors.</div>
+          </div>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>Uses low-cost components that are easy to replace.</div>
+          </div>
+          <div class="bullet">
+            <div class="bullet-dot"></div>
+            <div>ESP32 allows future expansion to mobile app or web dashboard.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COST -->
+    <section id="cost">
+      <div class="section-kicker">Approximate Budget</div>
+      <h2 class="section-title">Low-Cost Prototype Design</h2>
+      <p class="section-description">
+        The project is designed to be affordable for students. Prices vary by
+        country and supplier, so you can adjust the values according to your local
+        electronics market.
+      </p>
+
+      <div class="card">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Approx. Cost (?)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ESP32 Development Board</td>
+              <td>1</td>
+              <td><!-- Fill actual value, e.g. 400 --></td>
+            </tr>
+            <tr>
+              <td>MQ-135 Gas Sensor</td>
+              <td>1</td>
+              <td><!-- e.g. 150 --></td>
+            </tr>
+            <tr>
+              <td>BH1750 Light Sensor</td>
+              <td>1</td>
+              <td><!-- e.g. 120 --></td>
+            </tr>
+            <tr>
+              <td>HW-828 Water Level Sensor</td>
+              <td>1</td>
+              <td><!-- e.g. 100 --></td>
+            </tr>
+            <tr>
+              <td>DS18B20 Waterproof Sensor</td>
+              <td>1</td>
+              <td><!-- e.g. 150 --></td>
+            </tr>
+            <tr>
+              <td>LED Grow Light + Potentiometer</td>
+              <td>1 set</td>
+              <td><!-- e.g. 250 --></td>
+            </tr>
+            <tr>
+              <td>Algae Tank, Tubes &amp; Misc.</td>
+              <td>1 set</td>
+              <td><!-- e.g. 400 --></td>
+            </tr>
+            <tr class="table-total">
+              <td>Total (approx.)</td>
+              <td>-</td>
+              <td><!-- e.g. ~1500–2000 --></td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem;">
+          Note: Replace the blank cost fields with your actual component prices
+          from local shops or online stores.
+        </p>
+      </div>
+    </section>
+
+    <!-- CONTACT / DEMO -->
+    <section id="contact">
+      <div class="contact-grid">
+        <div>
+          <div class="section-kicker">Get in Touch</div>
+          <h2 class="section-title">Project Demo &amp; Enquiries</h2>
+          <p class="section-description">
+            Use this section in your live website to collect feedback or project
+            enquiries from visitors. For now, it is a sample form; you can connect
+            it later to email or Google Sheets.
+          </p>
+          <form onsubmit="handleFormSubmit(event)">
+            <div>
+              <label for="name">Name</label>
+              <input id="name" name="name" placeholder="Enter your name" />
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+              />
+            </div>
+            <div>
+              <label for="message">Message</label>
+              <textarea
+                id="message"
+                name="message"
+                placeholder="Ask about the project, demo or collaboration..."
+              ></textarea>
+            </div>
+            <button type="submit" class="btn-primary">
+              Send Message (Sample)
+            </button>
+            <p
+              id="formStatus"
+              style="font-size: 0.78rem; color: var(--muted); margin-top: 0.4rem;"
+            >
+              This demo form does not send real emails. You can connect it later
+              with your preferred service.
+            </p>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem;">
+            Spirogyra &amp; Algae Habitat (Info)
+          </h3>
+          <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 0.5rem;">
+            Spirogyra is a common green filamentous algae often found in
+            freshwater habitats like ponds, ditches and slow-moving streams. It
+            photosynthesizes actively in the presence of sunlight and clean water.
+          </p>
+          <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 0.5rem;">
+            For this project, a small quantity of Spirogyra can be cultured in a
+            transparent tank with adequate water, light and nutrients. Maintaining
+            a stable temperature and preventing contamination will help keep the
+            algae healthy.
+          </p>
+          <p style="font-size: 0.82rem; color: var(--muted);">
+            The habitat design demonstrates how even a simple freshwater algae can
+            be used creatively for air purification and environmental education.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© <span id="year"></span> Bio Fresh – Algae Air Purifier Project.</span>
+    <span>Built with ESP32, MQ-135, BH1750, HW-828, DS18B20, LED &amp; algae.</span>
+  </footer>
+
+  <script>
+    // Smooth scroll helper
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      window.scrollTo({
+        top: el.offsetTop - 70,
+        behavior: "smooth",
+      });
+    }
+
+    // Mobile nav toggle
+    const mobileBtn = document.getElementById("mobileMenuBtn");
+    const mobileLinks = document.getElementById("mobileNavLinks");
+
+    function toggleMobileNav() {
+      if (!mobileLinks) return;
+      mobileLinks.style.display =
+        mobileLinks.style.display === "flex" ? "none" : "flex";
+    }
+
+    if (mobileBtn) {
+      mobileBtn.addEventListener("click", toggleMobileNav);
+    }
+
+    // Demo form handler
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const status = document.getElementById("formStatus");
+      if (status) {
+        status.textContent =
+          "Thanks! In a real deployment this form would send your message to the project owner.";
+      }
+    }
+
+    // Year
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
